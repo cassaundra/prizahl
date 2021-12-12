@@ -24,7 +24,7 @@ source-repository head
 
 library
   exposed-modules:
-      Language.Prizahl.Expr
+      Language.Prizahl.AST
       Lib
   other-modules:
       Paths_prizahl
@@ -33,6 +33,9 @@ library
   build-depends:
       arithmoi
     , base >=4.7 && <5
+    , containers
+    , mtl
+    , transformers
   default-language: Haskell2010
 
 executable prizahl-exe
@@ -45,7 +48,10 @@ executable prizahl-exe
   build-depends:
       arithmoi
     , base >=4.7 && <5
+    , containers
+    , mtl
     , prizahl
+    , transformers
   default-language: Haskell2010
 
 test-suite prizahl-test
@@ -59,5 +65,8 @@ test-suite prizahl-test
   build-depends:
       arithmoi
     , base >=4.7 && <5
+    , containers
+    , mtl
     , prizahl
+    , transformers
   default-language: Haskell2010
