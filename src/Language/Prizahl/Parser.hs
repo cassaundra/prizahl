@@ -2,16 +2,16 @@
 
 module Language.Prizahl.Parser where
 
-import Control.Monad (void)
-import Data.List.NonEmpty (fromList)
-import Data.Maybe (fromMaybe)
-import Data.Void (Void)
-import Language.Prizahl.AST
-import qualified Math.NumberTheory.Primes as P
-import Math.NumberTheory.Primes.Testing (isPrime)
-import Text.Megaparsec
-import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
+import           Control.Monad                    (void)
+import           Data.List.NonEmpty               (fromList)
+import           Data.Maybe                       (fromMaybe)
+import           Data.Void                        (Void)
+import           Language.Prizahl.Prog
+import qualified Math.NumberTheory.Primes         as P
+import qualified Math.NumberTheory.Primes.Testing as PT
+import           Text.Megaparsec
+import           Text.Megaparsec.Char
+import qualified Text.Megaparsec.Char.Lexer       as L
 
 type Parser = Parsec Void String
 
@@ -75,7 +75,7 @@ value = lexeme $ (Prime <$> prime) <|> factorization <|> boolean <|> try quoteSy
 prime :: Parser (P.Prime Integer)
 prime = do
   p <- lexeme L.decimal
-  if isPrime p
+  if PT.isPrime p
     then return $ P.nextPrime p
     else fail "Expected a prime"
 

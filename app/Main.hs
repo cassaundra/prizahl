@@ -1,6 +1,8 @@
 module Main where
 
-import Language.Prizahl.AST
+import Language.Prizahl.Prog
+import Language.Prizahl.Env
+import Language.Prizahl.Builtins
 import Language.Prizahl.Eval
 import Language.Prizahl.Parser
 import Text.Megaparsec
@@ -21,7 +23,7 @@ main = do
         (putStrLn . errorBundlePretty)
         (print . runProgram)
         (runParser body fileName fileContent)
-    _ -> runInputT defaultSettings (repl defaultEnv)
+    _ -> runInputT defaultSettings (repl builtins)
 
 repl :: Env -> InputT IO ()
 repl env = do
@@ -29,15 +31,15 @@ repl env = do
   case line of
     Nothing -> return ()
     Just line -> do
-      case (runParser replLine "repl" line) of
+      case runParser replLine "repl" line of
         -- add a declaration to the environment
         Right (ReplDeclr declr) -> repl $ declare declr env
 
         -- evaluate an expression and recurse
         Right (ReplExpr expr) -> do
-          let result = (runReaderT (eval expr) env)
-          case (runExcept result) of
-            Left err -> outputStrLn $ "; " ++ err
+          let result = runReaderT (eval expr) env
+          case runExcept result of
+            Left err -> outputStrLn $ "error: " ++ err
             Right val -> outputStrLn $ show val
           repl env
 

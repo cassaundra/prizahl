@@ -1,7 +1,8 @@
-module Language.Prizahl.AST where
+module Language.Prizahl.Prog where
 
-import Data.Foldable (toList)
-import Data.List.NonEmpty (NonEmpty)
+import           Data.Foldable            (toList)
+import           Data.List.NonEmpty       (NonEmpty)
+import           Language.Prizahl.Error
 import qualified Math.NumberTheory.Primes as P
 
 data ReplLine = ReplExpr Expr | ReplDeclr Declaration
@@ -39,7 +40,7 @@ data Formals
   | MultipleFormals [Identifier] -- TODO (Maybe Identifier)
 
 instance Show Formals where
-  show (SingleFormal ident) = ident
+  show (SingleFormal ident)     = ident
   show (MultipleFormals params) = "(" ++ unwords params ++ ")"
   -- show (MultipleFormals params (Just rest)) =
   --   "(" ++ showSpacedList params ++ " . " ++ rest ++ ")"
@@ -68,6 +69,7 @@ data Value
   | Symbol String
   | List [Value]
   | Lambda Formals Body
+  | Builtin (Value -> Either Error Value)
 
 instance Show Value where
   show (Prime n) = show $ P.unPrime n
@@ -78,6 +80,29 @@ instance Show Value where
   show (List list) = "'(" ++ showSpacedList list ++ ")"
   show (Lambda formals body) =
     "(lambda " ++ show formals ++ " " ++ show body ++ ")"
+  show (Builtin _) = "#<built-in procedure>"
 
 showSpacedList :: (Foldable t, Show a) => t a -> String
 showSpacedList = unwords . map show . toList
+
+isNumber (Prime _)         = True
+isNumber (Factorization _) = True
+isNumber _                 = False
+
+isPrime (Prime _) = True
+isPrime _         = False
+
+isComposite (Factorization _) = True
+isComposite _                 = False
+
+isBoolean (Boolean _) = True
+isBoolean _           = False
+
+isSymbol (Symbol _) = True
+isSymbol _          = False
+
+isList (List _) = True
+isList _        = False
+
+isLambda (Lambda _ _) = True
+isLambda _            = False
