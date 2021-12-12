@@ -52,5 +52,5 @@ eval (Application f args) = do
         else
           throwError
             "number of parameters does not match number of arguments"
-    Builtin f -> either throwError return $ f (head args)
+    Builtin f -> either throwError return $ f args
     _ -> throwError "first argument did not evaluate to a procedure"

@@ -103,7 +103,7 @@ quoteSymbol = label "symbol" $ do
 list :: Parser Value
 list = label "list" $ do
   char '\''
-  List <$> sexp (sepBy1 value whitespace)
+  List <$> sexp (many value)
 
 lambda :: Parser Value
 lambda =

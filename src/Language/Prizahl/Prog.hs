@@ -69,7 +69,7 @@ data Value
   | Symbol String
   | List [Value]
   | Lambda Formals Body
-  | Builtin (Value -> Either Error Value)
+  | Builtin ([Value] -> Either Error Value)
 
 instance Show Value where
   show (Prime n) = show $ P.unPrime n
