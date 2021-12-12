@@ -21,8 +21,8 @@ main = do
       fileContent <- readFile fileName
       either
         (putStrLn . errorBundlePretty)
-        (print . runProgram)
-        (runParser body fileName fileContent)
+        (putStrLn . formatResult . runProgram)
+        (runParser file fileName fileContent)
     _ -> runInputT defaultSettings (repl builtins)
 
 repl :: Env -> InputT IO ()
@@ -33,17 +33,21 @@ repl env = do
     Just line -> do
       case runParser replLine "repl" line of
         -- add a declaration to the environment
-        Right (ReplDeclr declr) -> repl $ declare declr env
+        Right (Just (ReplDeclr declr)) -> repl $ declare declr env
 
         -- evaluate an expression and recurse
-        Right (ReplExpr expr) -> do
+        Right (Just (ReplExpr expr)) -> do
           let result = runReaderT (eval expr) env
-          case runExcept result of
-            Left err -> outputStrLn $ "error: " ++ err
-            Right val -> outputStrLn $ show val
+          outputStrLn $ formatResult result
           repl env
+
+        Right (Nothing) -> repl env
 
         -- parsing errror, print and continue
         Left err -> do
           outputStrLn $ errorBundlePretty err
           repl env
+
+formatResult result = case runExcept result of
+  Left err -> "error: " ++ err
+  Right val -> show val

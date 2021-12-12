@@ -2,7 +2,7 @@
 
 module Language.Prizahl.Parser where
 
-import           Control.Monad                    (void)
+import           Control.Monad                    (guard, void)
 import           Data.List.NonEmpty               (fromList)
 import           Data.Maybe                       (fromMaybe)
 import           Data.Void                        (Void)
@@ -18,7 +18,7 @@ type Parser = Parsec Void String
 parseExpr = runParser expr ""
 
 declaration :: Parser Declaration
-declaration = sexp $ do
+declaration = label "definition" $ sexp $ do
   symbol "define"
   choice
     [ VariableDefinition <$> identifier <*> expr,
@@ -33,65 +33,61 @@ formals =
         MultipleFormals <$> sexp (many identifier)
       ]
 
-replLine :: Parser ReplLine
-replLine =
-  choice
-    [ ReplDeclr <$> try declaration,
-      ReplExpr <$> expr
-    ]
-
 body :: Parser Body
 body = do
   decls <- many (lexeme $ try declaration)
   Body decls <$> expr
 
 identifier :: Parser Identifier
-identifier = lexeme $ (:) <$> letterChar <*> many (alphaNumChar <|> char '-')
+identifier =
+  label "identifier" $
+  lexeme $ (:) <$> letterChar <*> many (alphaNumChar <|> char '-')
 
 expr :: Parser Expr
 expr = lexeme $ try (Value <$> value) <|> variable <|> try ifStatement <|> application
 
 variable :: Parser Expr
-variable = Variable <$> identifier
+variable = Variable <$> identifier <?> "variable"
 
 ifStatement :: Parser Expr
-ifStatement =
+ifStatement = label "if statement" $
   sexp $ do
     symbol "if"
     test <- expr
     a <- expr
-    If test a <$> expr
+    b <- expr
+    return $ If test a b
 
 application :: Parser Expr
-application =
+application = label "application" $
   sexp $ do
     first <- expr
     rest <- many expr
     return $ Application first rest
 
 value :: Parser Value
-value = lexeme $ (Prime <$> prime) <|> factorization <|> boolean <|> try quoteSymbol <|> list <|> lambda
+value = label "value" $ lexeme $ (Prime <$> prime) <|> factorization <|> boolean <|> try quoteSymbol <|> list <|> lambda
 
 prime :: Parser (P.Prime Integer)
-prime = do
+prime = label "prime" $ do
   p <- lexeme L.decimal
-  if PT.isPrime p
-    then return $ P.nextPrime p
-    else fail "Expected a prime"
+  guard (PT.isPrime p) <?> "prime number"
+  return (P.nextPrime p)
 
 factorization :: Parser Value
 factorization =
-  surround '[' ']' $
-    Factorization . fromList <$> some factor
+  label "factorization" $
+  surround '[' ']' $ Factorization . fromList <$> some factor
 
 factor :: Parser Factor
-factor = lexeme $ do
+factor = label "factor" $ lexeme $ do
   base <- prime
-  expt <- optional (char '^' *> L.decimal)
-  return $ Factor (base, fromMaybe 1 expt)
+  expt <- fromMaybe 1 <$> optional (char '^' *> L.decimal)
+  guard (expt > 0) <?> "positive integer"
+  return $ Factor (base, expt)
 
 boolean :: Parser Value
-boolean = do
+boolean = label "boolean" $ do
   char '#'
   choice
     [ Boolean True <$ char 't',
@@ -99,19 +95,19 @@ boolean = do
     ]
 
 quoteSymbol :: Parser Value
-quoteSymbol = do
+quoteSymbol = label "symbol" $ do
   char '\''
   s <- some (alphaNumChar <|> char '-' <|> char '_')
   return $ Symbol s
 
 list :: Parser Value
-list = do
+list = label "list" $ do
   char '\''
   List <$> sexp (sepBy1 value whitespace)
 
 lambda :: Parser Value
 lambda =
-  sexp $ do
+  label "lambda" $ sexp $ do
     symbol "lambda"
     formals <- formals
     Lambda formals <$> body
@@ -133,3 +129,9 @@ surround l r a = lexeme (char l) *> a <* char r
 
 sexp :: Parser a -> Parser a
 sexp = surround '(' ')'
+
+replLine :: Parser (Maybe ReplLine)
+replLine = optional $ choice [ReplDeclr <$> try declaration, ReplExpr <$> expr]
+
+file :: Parser Body
+file = body <* eof
