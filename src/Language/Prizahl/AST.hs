@@ -7,6 +7,7 @@ import qualified Math.NumberTheory.Primes as P
 data Body = Body [Declaration] Expr
 
 instance Show Body where
+  show (Body [] expr) = show expr
   show (Body declarations expr) =
     showSpacedList declarations ++ " " ++ show expr
 
@@ -36,7 +37,7 @@ data Formals
 
 instance Show Formals where
   show (SingleFormal ident) = ident
-  show (MultipleFormals params) = "(" ++ showSpacedList params ++ ")"
+  show (MultipleFormals params) = "(" ++ unwords params ++ ")"
   -- show (MultipleFormals params (Just rest)) =
   --   "(" ++ showSpacedList params ++ " . " ++ rest ++ ")"
 
@@ -62,7 +63,7 @@ data Value
   | Factorization (NonEmpty Factor)
   | Boolean Bool
   | Symbol String
-  | List (NonEmpty Value)
+  | List [Value]
   | Lambda Formals Body
 
 instance Show Value where
@@ -73,7 +74,7 @@ instance Show Value where
   show (Symbol s) = "'" ++ s
   show (List list) = "'(" ++ showSpacedList list ++ ")"
   show (Lambda formals body) =
-    "(lambda (" ++ show formals ++ ") " ++ show body ++ ")"
+    "(lambda " ++ show formals ++ " " ++ show body ++ ")"
 
 showSpacedList :: (Foldable t, Show a) => t a -> String
 showSpacedList = unwords . map show . toList

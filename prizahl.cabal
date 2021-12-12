@@ -25,6 +25,7 @@ source-repository head
 library
   exposed-modules:
       Language.Prizahl.AST
+      Language.Prizahl.Eval
       Language.Prizahl.Parser
       Lib
   other-modules:

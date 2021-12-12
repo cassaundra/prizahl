@@ -16,7 +16,7 @@ parseExpr = runParser expr ""
 
 declaration :: Parser Declaration
 declaration = sexp $ do
-  lexeme $ string "define"
+  symbol "define"
   choice [ VariableDefinition <$> lexeme identifier <*> expr,
            FunctionDefinition <$> lexeme identifier <*> formals <*> body
          ]
@@ -29,7 +29,7 @@ formals = lexeme $ choice
 
 body :: Parser Body
 body = do
-  decls <- many declaration
+  decls <- many (lexeme $ try declaration)
   expr <- expr
   return $ Body decls expr
 
@@ -54,7 +54,7 @@ ifStatement =
 application :: Parser Expr
 application = sexp $ do
   first <- expr
-  rest <- some expr
+  rest <- many expr
   return $ Application first rest
 
 value :: Parser Value
@@ -77,7 +77,7 @@ quoteSymbol = do
 list :: Parser Value
 list = do
   char '\''
-  List . fromList <$> sexp (sepBy1 value whitespace)
+  List <$> sexp (sepBy1 value whitespace)
 
 lambda :: Parser Value
 lambda =
