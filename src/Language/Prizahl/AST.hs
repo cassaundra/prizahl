@@ -32,13 +32,13 @@ type Identifier = String
 
 data Formals
   = SingleFormal Identifier
-  | MultipleFormals [Identifier] (Maybe Identifier)
+  | MultipleFormals [Identifier] -- TODO (Maybe Identifier)
 
 instance Show Formals where
   show (SingleFormal ident) = ident
-  show (MultipleFormals params Nothing) = "(" ++ showSpacedList params ++ ")"
-  show (MultipleFormals params (Just rest)) =
-    "(" ++ showSpacedList params ++ " . " ++ rest ++ ")"
+  show (MultipleFormals params) = "(" ++ showSpacedList params ++ ")"
+  -- show (MultipleFormals params (Just rest)) =
+  --   "(" ++ showSpacedList params ++ " . " ++ rest ++ ")"
 
 data Expr
   = Value Value

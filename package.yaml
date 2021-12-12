@@ -22,6 +22,7 @@ dependencies:
 - base >= 4.7 && < 5
 - arithmoi
 - containers
+- megaparsec
 - mtl
 - transformers
 
@@ -38,6 +39,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - prizahl
+    - megaparsec
 
 tests:
   prizahl-test:
