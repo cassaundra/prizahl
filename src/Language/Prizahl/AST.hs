@@ -4,6 +4,9 @@ import Data.Foldable (toList)
 import Data.List.NonEmpty (NonEmpty)
 import qualified Math.NumberTheory.Primes as P
 
+data ReplLine = ReplExpr Expr | ReplDeclr Declaration
+  deriving Show
+
 data Body = Body [Declaration] Expr
 
 instance Show Body where
@@ -22,7 +25,7 @@ instance Show Declaration where
     "(define (" ++
     ident ++ " " ++ show args ++ ") " ++ show body ++ ")"
 
-newtype Factor = Factor (P.Prime Int, Word)
+newtype Factor = Factor (P.Prime Integer, Word)
   deriving (Eq)
 
 instance Show Factor where
@@ -59,7 +62,7 @@ instance Show Expr where
   -- show (Begin body) = "TODO"
 
 data Value
-  = Prime (P.Prime Int)
+  = Prime (P.Prime Integer)
   | Factorization (NonEmpty Factor)
   | Boolean Bool
   | Symbol String
