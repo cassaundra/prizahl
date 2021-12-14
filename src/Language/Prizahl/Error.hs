@@ -5,15 +5,17 @@ module Language.Prizahl.Error
 data Error t
   = TypeMismatch t t
   | ArityMismatch Int Int
-  | VariableNotBound String -- TODO use Identifier
+  | UnboundVariable String -- TODO use Identifier
   | OtherError String
   deriving Eq
 
 instance Show t => Show (Error t) where
-  show (TypeMismatch expected got)  = "type mismatch: " ++ formatExpected expected got
-  show (ArityMismatch expected got) = "arity mismatch: " ++ formatExpected expected got
-  show (VariableNotBound ident)     = "variable not bound: " ++ ident
-  show (OtherError s)               = s
+  show (TypeMismatch expected got) =
+    "type mismatch: " ++ formatExpected expected got
+  show (ArityMismatch expected got) =
+    "arity mismatch: " ++ formatExpected expected got
+  show (UnboundVariable ident) = "variable not bound: " ++ ident
+  show (OtherError s) = "error: " ++ s
 
 formatExpected :: Show a => a -> a -> String
 formatExpected expected got =

@@ -23,7 +23,7 @@ main = do
       fileContent <- readFile fileName
       putStrLn $
         either
-          (color Red . init . errorBundlePretty)
+          (errorStyle . init . errorBundlePretty)
           (formatResult . runProgram)
           (parseFile fileName fileContent)
     _ -> runInputT defaultSettings (repl builtins)
@@ -47,9 +47,11 @@ repl env = do
 
         -- parsing errror, print and continue
         Left err -> do
-          outputStrLn $ color Red . init $ errorBundlePretty err
+          outputStrLn $ errorStyle . init $ errorBundlePretty err
           repl env
 
 formatResult result = case runExcept result of
-  Left err  -> color Red $ show err
+  Left err  -> errorStyle $ show err
   Right val -> show val
+
+errorStyle = style Faint . color Red

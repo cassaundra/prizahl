@@ -44,24 +44,26 @@ builtins =
 toBuiltin :: ([Value] -> Except (Error T.Type) Value) -> Expr
 toBuiltin = Value . Builtin
 
+-- TODO readNumber
+
 readPrime (Prime p) = return p
-readPrime v         = throwError $ TypeMismatch T.Prime (typeOf v)
+readPrime v         = throwError $ TypeMismatch (T.Number T.Prime) (T.typeOf v)
 
 readComposite (Factorization f) = return f
-readComposite v = throwError $ TypeMismatch T.Composite (typeOf v)
+readComposite v = throwError $ TypeMismatch (T.Number T.Composite) (T.typeOf v)
 
 readBoolean (Boolean b) = return b
-readBoolean v           = throwError $ TypeMismatch T.Boolean (typeOf v)
+readBoolean v           = throwError $ TypeMismatch T.Boolean (T.typeOf v)
 
 readSymbol (Symbol s) = return s
-readSymbol v          = throwError $ TypeMismatch T.Symbol (typeOf v)
+readSymbol v          = throwError $ TypeMismatch T.Symbol (T.typeOf v)
 
 readList (List l) = return l
-readList v        = throwError $ TypeMismatch T.List (typeOf v)
+readList v        = throwError $ TypeMismatch T.List (T.typeOf v)
 
 readNonEmpty (List []) = throwError $ OtherError "list empty"
 readNonEmpty (List l)  = return l
-readNonEmpty v         = throwError $ TypeMismatch T.List (typeOf v)
+readNonEmpty v         = throwError $ TypeMismatch T.List (T.typeOf v)
 
 
 -- TODO for lambda and builtin

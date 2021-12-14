@@ -30,8 +30,8 @@ data Expr
   = Value Value
   | Variable Identifier
   | Application Expr [Expr]
-  -- | Let [(Identifier, Expr)] Body
-  -- | Begin Body
+  | Let [(Identifier, Expr)] Body
+  | Begin Body
 
 data Value
   = Prime (P.Prime Integer)
@@ -62,11 +62,11 @@ instance Show Factor where
 showSpacedList :: (Foldable t, Show a) => t a -> String
 showSpacedList = unwords . map show . toList
 
-typeOf :: Value -> T.Type
-typeOf (Prime _)         = T.Prime
-typeOf (Factorization _) = T.Composite
-typeOf (Boolean _)       = T.Boolean
-typeOf (Symbol _)        = T.Symbol
-typeOf (List _)          = T.List
-typeOf (Lambda _ _)      = T.Procedure
-typeOf (Builtin _)       = T.Procedure
+instance T.Typed Value where
+  typeOf (Prime _)         = T.Number T.Prime
+  typeOf (Factorization _) = T.Number T.Composite
+  typeOf (Boolean _)       = T.Boolean
+  typeOf (Symbol _)        = T.Symbol
+  typeOf (List _)          = T.List
+  typeOf (Lambda _ _)      = T.Procedure
+  typeOf (Builtin _)       = T.Procedure

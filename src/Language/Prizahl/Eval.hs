@@ -30,7 +30,7 @@ eval (Variable ident) = do
   env <- ask
   case M.lookup ident env of
     Just value -> eval value
-    Nothing    -> throwError $ VariableNotBound ident
+    Nothing    -> throwError $ UnboundVariable ident
 eval (Application f args) = do
   f <- eval f
   args <- mapM eval args
@@ -42,4 +42,4 @@ eval (Application f args) = do
         then local (bindAll (zip params (fmap Value args))) (exec body)
         else throwError $ ArityMismatch (length params) (length args)
     Builtin f -> either throwError return $ runExcept (f args)
-    _ -> throwError $ TypeMismatch Type.Procedure (typeOf f)
+    _ -> throwError $ TypeMismatch Type.Procedure (Type.typeOf f)
