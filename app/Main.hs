@@ -22,7 +22,7 @@ main = do
       either
         (putStrLn . errorBundlePretty)
         (putStrLn . formatResult . runProgram)
-        (runParser file fileName fileContent)
+        (parseFile fileName fileContent)
     _ -> runInputT defaultSettings (repl builtins)
 
 repl :: Env -> InputT IO ()
@@ -32,7 +32,7 @@ repl env = do
     Nothing -> return ()
     Just "" -> repl env
     Just line -> do
-      case runParser replLine "repl" line of
+      case parseReplLine line of
         -- add a declaration to the environment
         Right (Left declr) -> repl $ declare declr env
 

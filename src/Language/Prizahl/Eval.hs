@@ -1,6 +1,7 @@
 module Language.Prizahl.Eval where
 
-import           Control.Monad.Except       (Except, throwError, runExcept)
+import Control.Monad.Except
+    ( Except, throwError, runExcept, runExceptT )
 import           Control.Monad.Trans.Except (except)
 import           Control.Monad.Trans.Reader
 import qualified Data.Map                   as M
@@ -8,7 +9,6 @@ import           Language.Prizahl.Env
 import           Language.Prizahl.Error
 import           Language.Prizahl.Prog
 import qualified Language.Prizahl.Type      as Type
-import Control.Monad.Except (runExceptT)
 
 -- Program
 

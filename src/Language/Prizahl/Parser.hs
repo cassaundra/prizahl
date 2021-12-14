@@ -1,8 +1,17 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs          #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
-module Language.Prizahl.Parser where
+module Language.Prizahl.Parser
+  ( body
+  , replLine
+  , parseFile
+  , parseReplLine
+  ) where
 
 import           Control.Monad                    (guard, void)
+import           Control.Monad.Reader
+import           Control.Monad.State              (runState)
+import           Control.Monad.Trans.Reader       (ReaderT)
 import           Data.List.NonEmpty               (fromList)
 import           Data.Maybe                       (fromMaybe)
 import           Data.Void                        (Void)
@@ -13,9 +22,17 @@ import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer       as L
 
-type Parser = Parsec Void String
+data ParserState =
+  ParserState
+    { quoted :: Bool
+    }
 
-parseExpr = runParser expr ""
+defaultState = ParserState {quoted = False}
+
+type Parser = ReaderT ParserState (Parsec Void String)
+
+parseFile = runParser (runReaderT file defaultState)
+parseReplLine = runParser (runReaderT replLine defaultState) "repl"
 
 declaration :: Parser Declaration
 declaration = label "definition" $ sexp $ do
@@ -87,15 +104,17 @@ boolean = label "boolean" $ do
 
 quoteSymbol :: Parser Value
 quoteSymbol = label "symbol" $ do
-  char '\''
-  s <- some (alphaNumChar <|> char '-' <|> char '_')
+  ParserState {quoted} <- ask
+  unless quoted $ void (char '\'')
+  s <- some (alphaNumChar <|> char '-' <|> char '_' <|> char '\'')
   return $ Symbol s
 
 list :: Parser Value
 list =
   label "list" $ do
     char '\''
-    List <$> sexp (many value)
+    local (const ParserState {quoted=True}) $
+      List <$> sexp (many value)
 
 lambda :: Parser Value
 lambda =
