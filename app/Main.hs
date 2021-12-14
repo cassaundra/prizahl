@@ -49,5 +49,5 @@ repl env = do
           repl env
 
 formatResult result = case runExcept result of
-  Left err -> "error: " ++ err
+  Left err -> "error: " ++ show err
   Right val -> show val

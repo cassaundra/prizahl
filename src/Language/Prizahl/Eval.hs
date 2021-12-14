@@ -7,10 +7,11 @@ import qualified Data.Map                   as M
 import           Language.Prizahl.Env
 import           Language.Prizahl.Error
 import           Language.Prizahl.Prog
+import qualified Language.Prizahl.Type      as Type
 
 -- Program
 
-runProgram :: Body -> Except Error Value
+runProgram :: Body -> Except (Error Type.Type) Value
 runProgram body = runReaderT (exec body) M.empty
 
 -- Declaration execution
@@ -23,23 +24,28 @@ declare (VariableDefinition ident expr) = M.insert ident expr
 declare (FunctionDefinition ident params body) =
   M.insert ident (Value $ Lambda params body)
 
+
 -- Expression evaluation
 
-type Eval = ReaderT Env (Except Error)
+type Eval = ReaderT Env (Except (Error Type.Type))
 
 eval :: Expr -> Eval Value
+
 eval (Value v) = return v
+
 eval (Variable ident) = do
   env <- ask
   case M.lookup ident env of
     Just value -> eval value
-    Nothing    -> throwError $ "variable not bound: " ++ ident
+    Nothing    -> throwError $ VariableNotBound ident
+
 eval (If test a b) = do
   test <- eval test
   case test of
-    Boolean True -> eval a
+    Boolean True  -> eval a
     Boolean False -> eval b
-    _ -> throwError "expression in if conditional did not evaluate to a boolean"
+    _             -> throwError $ TypeMismatch Type.Boolean (typeOf test)
+
 eval (Application f args) = do
   f <- eval f
   args <- mapM eval args
@@ -49,8 +55,6 @@ eval (Application f args) = do
     Lambda (MultipleFormals params) body ->
       if length args == length params
         then local (bindAll (zip params (fmap Value args))) (exec body)
-        else
-          throwError
-            "number of parameters does not match number of arguments"
+        else throwError $ ArityMismatch (length params) (length args)
     Builtin f -> either throwError return $ f args
-    _ -> throwError "first argument did not evaluate to a procedure"
+    _ -> throwError $ TypeMismatch Type.Procedure (typeOf f)

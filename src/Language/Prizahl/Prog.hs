@@ -3,6 +3,7 @@ module Language.Prizahl.Prog where
 import           Data.Foldable            (toList)
 import           Data.List.NonEmpty       (NonEmpty)
 import           Language.Prizahl.Error
+import qualified Language.Prizahl.Type    as T
 import qualified Math.NumberTheory.Primes as P
 
 data ReplLine = ReplExpr Expr | ReplDeclr Declaration
@@ -69,7 +70,7 @@ data Value
   | Symbol String
   | List [Value]
   | Lambda Formals Body
-  | Builtin ([Value] -> Either Error Value)
+  | Builtin ([Value] -> Either (Error T.Type) Value)
 
 instance Show Value where
   show (Prime n) = show $ P.unPrime n
@@ -85,24 +86,11 @@ instance Show Value where
 showSpacedList :: (Foldable t, Show a) => t a -> String
 showSpacedList = unwords . map show . toList
 
-isNumber (Prime _)         = True
-isNumber (Factorization _) = True
-isNumber _                 = False
-
-isPrime (Prime _) = True
-isPrime _         = False
-
-isComposite (Factorization _) = True
-isComposite _                 = False
-
-isBoolean (Boolean _) = True
-isBoolean _           = False
-
-isSymbol (Symbol _) = True
-isSymbol _          = False
-
-isList (List _) = True
-isList _        = False
-
-isLambda (Lambda _ _) = True
-isLambda _            = False
+typeOf :: Value -> T.Type
+typeOf (Prime _)         = T.Prime
+typeOf (Factorization _) = T.Composite
+typeOf (Boolean _)       = T.Boolean
+typeOf (Symbol _)        = T.Symbol
+typeOf (List _)          = T.List
+typeOf (Lambda _ _)      = T.Procedure
+typeOf (Builtin _)       = T.Procedure

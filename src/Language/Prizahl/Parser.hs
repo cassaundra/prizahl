@@ -101,9 +101,10 @@ quoteSymbol = label "symbol" $ do
   return $ Symbol s
 
 list :: Parser Value
-list = label "list" $ do
-  char '\''
-  List <$> sexp (many value)
+list =
+  label "list" $ do
+    char '\''
+    List <$> sexp (many value)
 
 lambda :: Parser Value
 lambda =
