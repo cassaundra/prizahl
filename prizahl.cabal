@@ -24,12 +24,12 @@ source-repository head
 
 library
   exposed-modules:
+      Language.Prizahl.AST
       Language.Prizahl.Builtins
       Language.Prizahl.Env
       Language.Prizahl.Error
       Language.Prizahl.Eval
       Language.Prizahl.Parser
-      Language.Prizahl.Prog
       Language.Prizahl.Type
   other-modules:
       Paths_prizahl

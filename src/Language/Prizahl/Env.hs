@@ -1,7 +1,8 @@
 module Language.Prizahl.Env where
 
-import qualified Data.Map              as M
-import           Language.Prizahl.Prog
+import qualified Data.Map             as M
+
+import           Language.Prizahl.AST
 
 type Env = M.Map Identifier Expr
 

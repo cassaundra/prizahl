@@ -15,12 +15,13 @@ import           Control.Monad.Trans.Reader       (ReaderT)
 import           Data.List.NonEmpty               (fromList)
 import           Data.Maybe                       (fromMaybe)
 import           Data.Void                        (Void)
-import           Language.Prizahl.Prog
 import qualified Math.NumberTheory.Primes         as P
 import qualified Math.NumberTheory.Primes.Testing as PT
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer       as L
+
+import           Language.Prizahl.AST
 
 data ParserState =
   ParserState

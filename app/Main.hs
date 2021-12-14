@@ -1,17 +1,18 @@
 module Main where
 
-import Language.Prizahl.Prog
-import Language.Prizahl.Env
-import Language.Prizahl.Builtins
-import Language.Prizahl.Eval
-import Language.Prizahl.Parser
-import Text.Megaparsec
-import System.Environment (getArgs)
-import Control.Monad.Except (catchError)
-import Control.Monad.Trans.Reader (runReaderT)
-import Control.Monad.Trans.Except (runExcept)
-import System.IO (hFlush, stdout)
-import System.Console.Haskeline
+import           Control.Monad.Except       (catchError)
+import           Control.Monad.Trans.Except (runExcept)
+import           Control.Monad.Trans.Reader (runReaderT)
+import           System.Console.Haskeline
+import           System.Environment         (getArgs)
+import           System.IO                  (hFlush, stdout)
+import           Text.Megaparsec
+
+import           Language.Prizahl.AST
+import           Language.Prizahl.Builtins
+import           Language.Prizahl.Env
+import           Language.Prizahl.Eval
+import           Language.Prizahl.Parser
 
 main :: IO ()
 main = do
@@ -19,10 +20,11 @@ main = do
   case args of
     (fileName:_) -> do
       fileContent <- readFile fileName
-      either
-        (putStrLn . errorBundlePretty)
-        (putStrLn . formatResult . runProgram)
-        (parseFile fileName fileContent)
+      putStrLn $
+        either
+          errorBundlePretty
+          (formatResult . runProgram)
+          (parseFile fileName fileContent)
     _ -> runInputT defaultSettings (repl builtins)
 
 repl :: Env -> InputT IO ()
@@ -48,5 +50,5 @@ repl env = do
           repl env
 
 formatResult result = case runExcept result of
-  Left err -> "error: " ++ show err
+  Left err  -> "error: " ++ show err
   Right val -> show val
