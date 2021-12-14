@@ -30,18 +30,17 @@ repl env = do
   line <- getInputLine "λ> "
   case line of
     Nothing -> return ()
+    Just "" -> repl env
     Just line -> do
       case runParser replLine "repl" line of
         -- add a declaration to the environment
-        Right (Just (ReplDeclr declr)) -> repl $ declare declr env
+        Right (Left declr) -> repl $ declare declr env
 
         -- evaluate an expression and recurse
-        Right (Just (ReplExpr expr)) -> do
+        Right (Right expr) -> do
           let result = runReaderT (eval expr) env
           outputStrLn $ formatResult result
           repl env
-
-        Right (Nothing) -> repl env
 
         -- parsing errror, print and continue
         Left err -> do

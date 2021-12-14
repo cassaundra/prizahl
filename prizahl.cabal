@@ -31,7 +31,6 @@ library
       Language.Prizahl.Parser
       Language.Prizahl.Prog
       Language.Prizahl.Type
-      Lib
   other-modules:
       Paths_prizahl
   hs-source-dirs:

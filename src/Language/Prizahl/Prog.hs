@@ -6,9 +6,6 @@ import           Language.Prizahl.Error
 import qualified Language.Prizahl.Type    as T
 import qualified Math.NumberTheory.Primes as P
 
-data ReplLine = ReplExpr Expr | ReplDeclr Declaration
-  deriving Show
-
 data Body = Body [Declaration] Expr
 
 instance Show Body where

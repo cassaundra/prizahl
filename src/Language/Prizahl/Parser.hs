@@ -131,8 +131,8 @@ surround l r a = lexeme (char l) *> a <* char r
 sexp :: Parser a -> Parser a
 sexp = surround '(' ')'
 
-replLine :: Parser (Maybe ReplLine)
-replLine = optional $ choice [ReplDeclr <$> try declaration, ReplExpr <$> expr]
+replLine :: Parser (Either Declaration Expr)
+replLine = choice [Left <$> try declaration, Right <$> expr]
 
 file :: Parser Body
 file = body <* eof
