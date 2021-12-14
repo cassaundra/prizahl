@@ -35,6 +35,12 @@ type Parser = ReaderT ParserState (Parsec Void String)
 parseFile = runParser (runReaderT file defaultState)
 parseReplLine = runParser (runReaderT replLine defaultState) "repl"
 
+file :: Parser Body
+file = body <* eof
+
+replLine :: Parser (Either Declaration Expr)
+replLine = choice [Left <$> try declaration, Right <$> expr]
+
 declaration :: Parser Declaration
 declaration = label "definition" $ sexp $ do
   symbol "define"
@@ -78,10 +84,11 @@ value :: Parser Value
 value = label "value" $ lexeme $ (Prime <$> prime) <|> factorization <|> boolean <|> try quoteSymbol <|> list <|> lambda
 
 prime :: Parser (P.Prime Integer)
-prime = label "prime" $ do
-  p <- lexeme L.decimal
-  guard (PT.isPrime p) <?> "prime number"
-  return (P.nextPrime p)
+prime =
+  label "prime" $ do
+    p <- lexeme L.decimal
+    unless (PT.isPrime p) $ failHere "not prime!"
+    return (P.nextPrime p)
 
 factorization :: Parser Value
 factorization =
@@ -89,11 +96,13 @@ factorization =
   surround '[' ']' $ Factorization . fromList <$> some factor
 
 factor :: Parser Factor
-factor = label "factor" $ lexeme $ do
-  base <- prime
-  expt <- fromMaybe 1 <$> optional (char '^' *> L.decimal)
-  guard (expt > 0) <?> "positive integer"
-  return $ Factor (base, expt)
+factor =
+  label "factor" $
+  lexeme $ do
+    base <- prime
+    expt <- fromMaybe 1 <$> optional (char '^' *> L.decimal)
+    unless (expt > 0) $ failHere "not positive!"
+    return $ Factor (base, expt)
 
 boolean :: Parser Value
 boolean = label "boolean" $ do
@@ -142,8 +151,8 @@ surround l r a = lexeme (char l) *> a <* char r
 sexp :: Parser a -> Parser a
 sexp = surround '(' ')'
 
-replLine :: Parser (Either Declaration Expr)
-replLine = choice [Left <$> try declaration, Right <$> expr]
-
-file :: Parser Body
-file = body <* eof
+failHere :: (MonadParsec e s m, MonadFail m) => String -> m b
+failHere msg = do
+  offset <- getOffset
+  setOffset (offset - 1)
+  fail msg

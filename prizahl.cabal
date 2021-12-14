@@ -58,6 +58,7 @@ executable prizahl-exe
     , haskeline
     , megaparsec
     , mtl
+    , pretty-terminal
     , prizahl
     , transformers
   default-language: Haskell2010

@@ -39,8 +39,9 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - prizahl
-    - megaparsec
     - haskeline
+    - megaparsec
+    - pretty-terminal
 
 tests:
   prizahl-test:

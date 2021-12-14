@@ -4,6 +4,7 @@ import           Control.Monad.Except       (catchError)
 import           Control.Monad.Trans.Except (runExcept)
 import           Control.Monad.Trans.Reader (runReaderT)
 import           System.Console.Haskeline
+import           System.Console.Pretty
 import           System.Environment         (getArgs)
 import           System.IO                  (hFlush, stdout)
 import           Text.Megaparsec
@@ -22,7 +23,7 @@ main = do
       fileContent <- readFile fileName
       putStrLn $
         either
-          errorBundlePretty
+          (color Red . init . errorBundlePretty)
           (formatResult . runProgram)
           (parseFile fileName fileContent)
     _ -> runInputT defaultSettings (repl builtins)
@@ -46,9 +47,9 @@ repl env = do
 
         -- parsing errror, print and continue
         Left err -> do
-          outputStrLn $ errorBundlePretty err
+          outputStrLn $ color Red . init $ errorBundlePretty err
           repl env
 
 formatResult result = case runExcept result of
-  Left err  -> "error: " ++ show err
+  Left err  -> color Red $ show err
   Right val -> show val
