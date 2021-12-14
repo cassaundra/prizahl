@@ -1,6 +1,6 @@
 module Language.Prizahl.Eval where
 
-import           Control.Monad.Except       (Except, throwError)
+import           Control.Monad.Except       (Except, throwError, runExcept)
 import           Control.Monad.Trans.Except (except)
 import           Control.Monad.Trans.Reader
 import qualified Data.Map                   as M
@@ -8,6 +8,7 @@ import           Language.Prizahl.Env
 import           Language.Prizahl.Error
 import           Language.Prizahl.Prog
 import qualified Language.Prizahl.Type      as Type
+import Control.Monad.Except (runExceptT)
 
 -- Program
 
@@ -39,13 +40,6 @@ eval (Variable ident) = do
     Just value -> eval value
     Nothing    -> throwError $ VariableNotBound ident
 
-eval (If test a b) = do
-  test <- eval test
-  case test of
-    Boolean True  -> eval a
-    Boolean False -> eval b
-    _             -> throwError $ TypeMismatch Type.Boolean (typeOf test)
-
 eval (Application f args) = do
   f <- eval f
   args <- mapM eval args
@@ -56,5 +50,5 @@ eval (Application f args) = do
       if length args == length params
         then local (bindAll (zip params (fmap Value args))) (exec body)
         else throwError $ ArityMismatch (length params) (length args)
-    Builtin f -> either throwError return $ f args
+    Builtin f -> either throwError return $ runExcept (f args)
     _ -> throwError $ TypeMismatch Type.Procedure (typeOf f)

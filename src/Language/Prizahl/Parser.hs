@@ -44,19 +44,10 @@ identifier =
   lexeme $ (:) <$> letterChar <*> many (alphaNumChar <|> char '-')
 
 expr :: Parser Expr
-expr = lexeme $ try (Value <$> value) <|> variable <|> try ifStatement <|> application
+expr = lexeme $ try (Value <$> value) <|> variable <|> application
 
 variable :: Parser Expr
 variable = Variable <$> identifier <?> "variable"
-
-ifStatement :: Parser Expr
-ifStatement = label "if statement" $
-  sexp $ do
-    symbol "if"
-    test <- expr
-    a <- expr
-    b <- expr
-    return $ If test a b
 
 application :: Parser Expr
 application = label "application" $

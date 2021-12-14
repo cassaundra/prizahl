@@ -10,8 +10,8 @@ data Error t
   deriving Eq
 
 instance Show t => Show (Error t) where
-  show (TypeMismatch expected got)  = formatExpected expected got
-  show (ArityMismatch expected got) = formatExpected expected got
+  show (TypeMismatch expected got)  = "type mismatch: " ++ formatExpected expected got
+  show (ArityMismatch expected got) = "arity mismatch: " ++ formatExpected expected got
   show (VariableNotBound ident)     = "variable not bound: " ++ ident
   show (OtherError s)               = s
 

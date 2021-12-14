@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 module Language.Prizahl.Builtins where
 
 import qualified Data.Map                 as M
@@ -5,26 +6,55 @@ import           Language.Prizahl.Env
 import           Language.Prizahl.Error
 import           Language.Prizahl.Eval
 import           Language.Prizahl.Prog
-import           Language.Prizahl.Type    (Type)
+import qualified Language.Prizahl.Type as T
 import qualified Math.NumberTheory.Primes as P
+import Control.Monad.Except (Except, MonadError (throwError))
+import Control.Monad (when)
+import Prelude hiding (readList)
 
-cons [v, List lst] = Right $ List (v:lst)
-cons _             = Left $ OtherError "invalid"
+-- ifStatement [Boolean bool, a, b] = Right $ if bool then a else b
 
-car [List []]    = Left $ OtherError "empty list"
-car [List (x:_)] = Right $ x
-car _            = Left $ OtherError "invalid"
+ifStatement [condition, a, b] = do
+  condition <- readBoolean condition
+  return $ if condition then a else b
+ifStatement args = throwError $ ArityMismatch 3 (length args)
 
-cdr [List []]     = Left $ OtherError "empty list"
-cdr [List (_:xs)] = Right $ List xs
-cdr _             = Left $ OtherError "invalid"
+cons [v, lst] = List . (v :) <$> readList lst
+cons args = throwError $ ArityMismatch 2 (length args)
+
+car [lst] = head <$> readNonEmpty lst
+car args = throwError $ ArityMismatch 2 (length args)
+
+cdr [lst] = List . tail <$> readNonEmpty lst
+cdr args = throwError $ ArityMismatch 2 (length args)
 
 builtins :: Env
 builtins =
   M.fromList $
   map
     (fmap toBuiltin)
-    [("cons", cons), ("car", car), ("cdr", cdr)]
+    [("if", ifStatement), ("cons", cons), ("car", car), ("cdr", cdr)]
 
-toBuiltin :: ([Value] -> Either (Error Type) Value) -> Expr
+toBuiltin :: ([Value] -> Except (Error T.Type) Value) -> Expr
 toBuiltin = Value . Builtin
+
+readPrime (Prime p) = return p
+readPrime v = throwError $ TypeMismatch T.Prime (typeOf v)
+
+readComposite (Factorization f) = return f
+readComposite v = throwError $ TypeMismatch T.Composite (typeOf v)
+
+readBoolean (Boolean b) = return b
+readBoolean v = throwError $ TypeMismatch T.Boolean (typeOf v)
+
+readSymbol (Symbol s) = return s
+readSymbol v = throwError $ TypeMismatch T.Symbol (typeOf v)
+
+readList (List l) = return l
+readList v = throwError $ TypeMismatch T.List (typeOf v)
+
+readNonEmpty (List []) = throwError $ OtherError "list empty"
+readNonEmpty (List l) = return l
+readNonEmpty v = throwError $ TypeMismatch T.List (typeOf v)
+
+-- TODO for lambda and builtin

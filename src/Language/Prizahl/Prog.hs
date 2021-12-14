@@ -5,6 +5,7 @@ import           Data.List.NonEmpty       (NonEmpty)
 import           Language.Prizahl.Error
 import qualified Language.Prizahl.Type    as T
 import qualified Math.NumberTheory.Primes as P
+import Control.Monad.Except (Except)
 
 data Body = Body [Declaration] Expr
 
@@ -46,7 +47,6 @@ instance Show Formals where
 data Expr
   = Value Value
   | Variable Identifier
-  | If Expr Expr Expr
   | Application Expr [Expr]
   -- | Let [(Identifier, Expr)] Body
   -- | Begin Body
@@ -54,7 +54,6 @@ data Expr
 instance Show Expr where
   show (Value value) = show value
   show (Variable ident) = ident
-  show (If test a b) = "(if " ++ showSpacedList [test, a, b] ++ ")"
   show (Application fn args) =
     "(" ++ show fn ++ " " ++ showSpacedList args ++ ")"
   -- show (Let bindings body) = "TODO"
@@ -67,7 +66,7 @@ data Value
   | Symbol String
   | List [Value]
   | Lambda Formals Body
-  | Builtin ([Value] -> Either (Error T.Type) Value)
+  | Builtin ([Value] -> Except (Error T.Type) Value)
 
 instance Show Value where
   show (Prime n) = show $ P.unPrime n
