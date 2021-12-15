@@ -4,14 +4,14 @@ import qualified Data.Map             as M
 
 import           Language.Prizahl.AST
 
-type Env = M.Map Identifier Expr
+type Env = M.Map Identifier SExpr
 
 defaultEnv :: M.Map k a
 defaultEnv = M.empty
 
-bind :: Identifier -> Expr -> Env -> Env
+bind :: Identifier -> SExpr -> Env -> Env
 bind = M.insert
 
-bindAll :: [(Identifier, Expr)] -> Env -> Env
+bindAll :: [(Identifier, SExpr)] -> Env -> Env
 bindAll bindings env =
   foldr (uncurry bind) env bindings

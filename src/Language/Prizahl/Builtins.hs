@@ -18,15 +18,15 @@ ifStatement [condition, a, b] = do
   return $ if condition then a else b
 ifStatement args = throwError $ ArityMismatch 3 (length args)
 
-list lst = return $ List lst
+list lst = return $ AList lst
 
-cons [v, lst] = List . (v :) <$> readList lst
+cons [v, lst] = AList . (v :) <$> readList lst
 cons args     = throwError $ ArityMismatch 2 (length args)
 
 car [lst] = head <$> readNonEmpty lst
 car args  = throwError $ ArityMismatch 2 (length args)
 
-cdr [lst] = List . tail <$> readNonEmpty lst
+cdr [lst] = AList . tail <$> readNonEmpty lst
 cdr args  = throwError $ ArityMismatch 2 (length args)
 
 builtins :: Env
@@ -41,28 +41,28 @@ builtins =
     , ("cdr", cdr)
     ]
 
-toBuiltin :: ([Value] -> Except (Error T.Type) Value) -> Expr
-toBuiltin = Value . Builtin
+toBuiltin :: ([Atom] -> Except (Error T.Type) Atom) -> SExpr
+toBuiltin = SAtom . ABuiltin
 
 -- TODO readNumber
 
-readPrime (Prime p) = return p
+readPrime (APrime p) = return p
 readPrime v         = throwError $ TypeMismatch (T.Number T.Prime) (T.typeOf v)
 
-readComposite (Factorization f) = return f
+readComposite (AComposite f) = return f
 readComposite v = throwError $ TypeMismatch (T.Number T.Composite) (T.typeOf v)
 
-readBoolean (Boolean b) = return b
+readBoolean (ABoolean b) = return b
 readBoolean v           = throwError $ TypeMismatch T.Boolean (T.typeOf v)
 
-readSymbol (Symbol s) = return s
+readSymbol (ASymbol s) = return s
 readSymbol v          = throwError $ TypeMismatch T.Symbol (T.typeOf v)
 
-readList (List l) = return l
+readList (AList l) = return l
 readList v        = throwError $ TypeMismatch T.List (T.typeOf v)
 
-readNonEmpty (List []) = throwError $ OtherError "list empty"
-readNonEmpty (List l)  = return l
+readNonEmpty (AList []) = throwError $ OtherError "list empty"
+readNonEmpty (AList l)  = return l
 readNonEmpty v         = throwError $ TypeMismatch T.List (T.typeOf v)
 
 

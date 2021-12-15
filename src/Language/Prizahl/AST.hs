@@ -1,4 +1,14 @@
-module Language.Prizahl.AST where
+module Language.Prizahl.AST
+  ( Identifier
+  , Body(..)
+  , Declaration(..)
+  , Formals(..)
+  , Expr(..)
+  , Value(..)
+  , SExpr(..)
+  , Atom(..)
+  , Factor(..)
+  ) where
 
 import           Control.Monad.Except     (Except)
 import           Data.Foldable            (toList)
@@ -27,30 +37,55 @@ instance Show Formals where
   --   "(" ++ showSpacedList params ++ " . " ++ rest ++ ")"
 
 data Expr
-  = Value Value
-  | Variable Identifier
-  | Application Expr [Expr]
-  | Let [(Identifier, Expr)] Body
-  | Begin Body
+  = EValue Value
+  | EVariable Identifier
+  | EApplication Expr [Expr]
+  | EBegin Body
+  | ELet [(Identifier, Expr)] Body
 
 data Value
-  = Prime (P.Prime Integer)
-  | Factorization (NonEmpty Factor)
-  | Boolean Bool
-  | Symbol String
-  | List [Value]
-  | Lambda Formals Body
-  | Builtin ([Value] -> Except (Error T.Type) Value)
+  = VPrime (P.Prime Integer)
+  | VFactorization (NonEmpty Factor)
+  | VBoolean Bool
+  | VSymbol String
+  | VList [Value]
+  | VLambda Formals Body
+  -- | VBuiltin ([Value] -> Except (Error T.Type) Value)
 
-instance Show Value where
-  show (Prime n)               = show $ P.unPrime n
-  show (Factorization factors) = "[" ++ showSpacedList factors ++ "]"
-  show (Boolean True)          = "#t"
-  show (Boolean False)         = "#f"
-  show (Symbol s)              = "'" ++ s
-  show (List list)             = "'(" ++ showSpacedList list ++ ")"
-  show (Lambda _ _)            = "#<procedure>"
-  show (Builtin _)             = "#<procedure>"
+-- TODO need a different value type since this one has a lambda with a body, and
+-- we want a lambda with a sexpr
+
+data SExpr
+  = SAtom Atom
+  | SVariable Identifier
+  | SApplication SExpr [SExpr]
+
+data Atom = APrime (P.Prime Integer)
+          | AComposite (NonEmpty Factor)
+          | ABoolean Bool
+          | ASymbol String
+          | AList [Atom]
+          | ALambda Formals SExpr
+          | ABuiltin ([Atom] -> Except (Error T.Type) Atom)
+
+instance T.Typed Atom where
+  typeOf (APrime _)     = T.Number T.Prime
+  typeOf (AComposite _) = T.Number T.Composite
+  typeOf (ABoolean _)   = T.Boolean
+  typeOf (ASymbol _)    = T.Symbol
+  typeOf (AList _)      = T.List
+  typeOf (ALambda _ _)  = T.Procedure
+  typeOf (ABuiltin _)   = T.Procedure
+
+instance Show Atom where
+  show (APrime n)           = show $ P.unPrime n
+  show (AComposite factors) = "[" ++ showSpacedList factors ++ "]"
+  show (ABoolean True)      = "#t"
+  show (ABoolean False)     = "#f"
+  show (ASymbol s)          = "'" ++ s
+  show (AList list)         = "'(" ++ showSpacedList list ++ ")"
+  show (ALambda _ _)        = "#<procedure>"
+  show (ABuiltin _)         = "#<procedure>"
 
 newtype Factor = Factor (P.Prime Integer, Word)
   deriving (Eq)
@@ -61,12 +96,3 @@ instance Show Factor where
 
 showSpacedList :: (Foldable t, Show a) => t a -> String
 showSpacedList = unwords . map show . toList
-
-instance T.Typed Value where
-  typeOf (Prime _)         = T.Number T.Prime
-  typeOf (Factorization _) = T.Number T.Composite
-  typeOf (Boolean _)       = T.Boolean
-  typeOf (Symbol _)        = T.Symbol
-  typeOf (List _)          = T.List
-  typeOf (Lambda _ _)      = T.Procedure
-  typeOf (Builtin _)       = T.Procedure

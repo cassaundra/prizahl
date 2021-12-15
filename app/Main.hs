@@ -41,7 +41,7 @@ repl env = do
 
         -- evaluate an expression and recurse
         Right (Right expr) -> do
-          let result = runReaderT (eval expr) env
+          let result = evalExpression expr env
           outputStrLn $ formatResult result
           repl env
 

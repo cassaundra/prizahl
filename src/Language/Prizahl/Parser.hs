@@ -68,20 +68,28 @@ identifier =
   lexeme $ (:) <$> letterChar <*> many (alphaNumChar <|> char '-')
 
 expr :: Parser Expr
-expr = lexeme $ try (Value <$> value) <|> variable <|> application
+expr = lexeme $ try (EValue <$> value) <|> variable <|> try begin <|> application
 
 variable :: Parser Expr
-variable = Variable <$> identifier <?> "variable"
+variable = EVariable <$> identifier <?> "variable"
 
 application :: Parser Expr
 application = label "application" $
   sexp $ do
     first <- expr
     rest <- many expr
-    return $ Application first rest
+    return $ EApplication first rest
+
+begin :: Parser Expr
+begin = label "begin block" $
+  sexp $ do
+    symbol "begin"
+    EBegin <$> body
+
+-- TODO let
 
 value :: Parser Value
-value = label "value" $ lexeme $ (Prime <$> prime) <|> factorization <|> boolean <|> try quoteSymbol <|> list <|> lambda
+value = label "value" $ lexeme $ (VPrime <$> prime) <|> factorization <|> boolean <|> try quoteSymbol <|> list <|> lambda
 
 prime :: Parser (P.Prime Integer)
 prime =
@@ -93,7 +101,7 @@ prime =
 factorization :: Parser Value
 factorization =
   label "factorization" $
-  surround '[' ']' $ Factorization . fromList <$> some factor
+  surround '[' ']' $ VFactorization . fromList <$> some factor
 
 factor :: Parser Factor
 factor =
@@ -108,8 +116,8 @@ boolean :: Parser Value
 boolean = label "boolean" $ do
   char '#'
   choice
-    [ Boolean True <$ char 't',
-      Boolean False <$ char 'f'
+    [ VBoolean True <$ char 't',
+      VBoolean False <$ char 'f'
     ]
 
 quoteSymbol :: Parser Value
@@ -117,21 +125,21 @@ quoteSymbol = label "symbol" $ do
   ParserState {quoted} <- ask
   unless quoted $ void (char '\'')
   s <- some (alphaNumChar <|> char '-' <|> char '_' <|> char '\'')
-  return $ Symbol s
+  return $ VSymbol s
 
 list :: Parser Value
 list =
   label "list" $ do
     char '\''
     local (const ParserState {quoted=True}) $
-      List <$> sexp (many value)
+      VList <$> sexp (many value)
 
 lambda :: Parser Value
 lambda =
   label "lambda" $ sexp $ do
     symbol "lambda"
     formals <- formals
-    Lambda formals <$> body
+    VLambda formals <$> body
 
 whitespace :: Parser ()
 whitespace = () <$ many space1
