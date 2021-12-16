@@ -12,15 +12,17 @@ module Language.Prizahl.AST
   , Factor(..)
   ) where
 
-import           Control.Monad.Except     (Except)
-import           Control.Newtype.Generics (Newtype (unpack))
-import           Data.Foldable            (toList)
-import           Data.Function            (on)
-import           GHC.Generics             (Generic)
-import qualified Math.NumberTheory.Primes as P
+import           Control.Monad.Except       (Except)
+import           Control.Monad.Reader       (Reader, local)
+import           Control.Newtype.Generics   (Newtype (unpack))
+import           Data.Foldable              (toList)
+import           Data.Function              (on)
+import           GHC.Generics               (Generic)
+import qualified Math.NumberTheory.Primes   as P
 
+import           Control.Monad.Trans.Reader (ask, runReader)
 import           Language.Prizahl.Error
-import qualified Language.Prizahl.Type    as T
+import qualified Language.Prizahl.Type      as T
 
 type Identifier = String
 
@@ -89,15 +91,28 @@ instance T.Typed Atom where
   typeOf (ABuiltin _)   = T.Procedure
 
 instance Show Atom where
-  show AZero                = "0"
-  show (APrime n)           = show $ P.unPrime n
-  show (AComposite factors) = "[" ++ showSpacedList factors ++ "]"
-  show (ABoolean True)      = "#t"
-  show (ABoolean False)     = "#f"
-  show (ASymbol s)          = "'" ++ s
-  show (AList list)         = "'(" ++ showSpacedList list ++ ")"
-  show (ALambda _ _)        = "#<procedure>"
-  show (ABuiltin _)         = "#<procedure>"
+  show atom = runReader (showInner atom) False
+
+showInner :: Atom -> Reader Bool String
+showInner AZero                = return "0"
+showInner (APrime n)           = return $ show $ P.unPrime n
+showInner (AComposite factors) = return $ "[" ++ showSpacedList factors ++ "]"
+showInner (ABoolean True)      = return "#t"
+showInner (ABoolean False)     = return "#f"
+showInner (ALambda _ _)        = return "#<procedure>"
+showInner (ABuiltin _)         = return "#<procedure>"
+showInner (ASymbol s) = possiblyQuote s
+showInner (AList list) = do
+  inner <- local (const True) (unwords <$> mapM showInner list)
+  possiblyQuote $ "(" ++ inner ++ ")"
+
+possiblyQuote :: String -> Reader Bool String
+possiblyQuote s = do
+  inQuoted <- ask
+  return $
+    if inQuoted
+      then s
+      else "'" ++ s
 
 newtype Factor = Factor (P.Prime Integer, Word)
   deriving (Generic, Eq)
@@ -105,7 +120,7 @@ newtype Factor = Factor (P.Prime Integer, Word)
 instance Newtype Factor
 
 instance Ord Factor where
-  compare = compare `on` (fst . unpack)
+  compare = compare `on` fst . unpack
 
 instance Show Factor where
   show (Factor (p, 1)) = show $ P.unPrime p

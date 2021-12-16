@@ -124,19 +124,22 @@ boolean = label "boolean" $ do
       VBoolean False <$ char 'f'
     ]
 
-quoteSymbol :: Parser Value
-quoteSymbol = label "symbol" $ do
+possiblyTakeQuote :: Parser ()
+possiblyTakeQuote = do
   ParserState {quoted} <- ask
   unless quoted $ void (char '\'')
+
+quoteSymbol :: Parser Value
+quoteSymbol = label "symbol" $ do
+  possiblyTakeQuote
   s <- some (alphaNumChar <|> char '-' <|> char '_' <|> char '\'')
   return $ VSymbol s
 
 list :: Parser Value
 list =
   label "list" $ do
-    void $ char '\''
-    local (const ParserState {quoted=True}) $
-      VList <$> sexp (many value)
+    possiblyTakeQuote
+    local (const ParserState {quoted = True}) $ VList <$> sexp (many value)
 
 lambda :: Parser Value
 lambda =
