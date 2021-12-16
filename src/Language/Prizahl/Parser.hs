@@ -1,4 +1,3 @@
-{-# LANGUAGE GADTs          #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
 module Language.Prizahl.Parser
@@ -8,11 +7,7 @@ module Language.Prizahl.Parser
   , parseReplLine
   ) where
 
-import           Control.Monad                    (guard, void)
 import           Control.Monad.Reader
-import           Control.Monad.State              (runState)
-import           Control.Monad.Trans.Reader       (ReaderT)
-import           Data.List.NonEmpty               (fromList)
 import           Data.Maybe                       (fromMaybe)
 import           Data.Void                        (Void)
 import qualified Math.NumberTheory.Primes         as P
@@ -33,6 +28,7 @@ defaultState = ParserState {quoted = False}
 type Parser = ReaderT ParserState (Parsec Void String)
 
 parseFile = runParser (runReaderT file defaultState)
+
 parseReplLine = runParser (runReaderT replLine defaultState) "repl"
 
 file :: Parser Body
@@ -43,7 +39,7 @@ replLine = choice [Left <$> try declaration, Right <$> expr]
 
 declaration :: Parser Declaration
 declaration = label "definition" $ sexp $ do
-  symbol "define"
+  void $ symbol "define"
   choice
     [ VariableDefinition <$> identifier <*> expr,
       FunctionDefinition <$> identifier <*> formals <*> body
@@ -83,7 +79,7 @@ application = label "application" $
 begin :: Parser Expr
 begin = label "begin block" $
   sexp $ do
-    symbol "begin"
+    void $ symbol "begin"
     EBegin <$> body
 
 -- TODO let
@@ -91,22 +87,27 @@ begin = label "begin block" $
 value :: Parser Value
 value = label "value" $ lexeme $ number <|> boolean <|> try quoteSymbol <|> list <|> lambda
 
+number :: Parser Value
 number = zero <|> (VPrime <$> prime) <|> factorization
 
+zero :: Parser Value
 zero = do
   void $ some (char '0')
   return VZero
 
+prime :: Parser (P.Prime Integer)
 prime =
   label "prime" $ do
     p <- lexeme L.decimal
     unless (PT.isPrime p) $ failHere "not prime"
     return (P.nextPrime p)
 
+factorization :: Parser Value
 factorization =
   label "factorization" $
   surround '[' ']' $ VFactorization <$> many factor
 
+factor :: Parser Factor
 factor =
   label "factor" $
   lexeme $ do
@@ -117,7 +118,7 @@ factor =
 
 boolean :: Parser Value
 boolean = label "boolean" $ do
-  char '#'
+  void $ char '#'
   choice
     [ VBoolean True <$ char 't',
       VBoolean False <$ char 'f'
@@ -133,28 +134,25 @@ quoteSymbol = label "symbol" $ do
 list :: Parser Value
 list =
   label "list" $ do
-    char '\''
+    void $ char '\''
     local (const ParserState {quoted=True}) $
       VList <$> sexp (many value)
 
 lambda :: Parser Value
 lambda =
   label "lambda" $ sexp $ do
-    symbol "lambda" <|> symbol "λ"
+    void $ symbol "lambda" <|> symbol "λ"
     formals <- formals
     VLambda formals <$> body
 
 whitespace :: Parser ()
-whitespace = () <$ many space1
-
-sc :: Parser ()
-sc = L.space space1 (L.skipLineComment ";") empty
+whitespace = L.space space1 (L.skipLineComment ";") empty
 
 lexeme :: Parser a -> Parser a
-lexeme = L.lexeme sc
+lexeme = L.lexeme whitespace
 
 symbol :: String -> Parser String
-symbol = L.symbol sc
+symbol = L.symbol whitespace
 
 surround :: Char -> Char -> Parser a -> Parser a
 surround l r a = lexeme (char l) *> a <* char r

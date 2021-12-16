@@ -1,4 +1,9 @@
-module Language.Prizahl.Env where
+module Language.Prizahl.Env
+  ( Env
+  , defaultEnv
+  , bind
+  , bindAll
+  ) where
 
 import qualified Data.Map                  as M
 

@@ -11,12 +11,12 @@ data Error t
 
 instance Show t => Show (Error t) where
   show (TypeMismatch expected got) =
-    "type mismatch: " ++ formatExpected expected got
+    "type mismatch: " ++ formatMismatch expected got
   show (ArityMismatch expected got) =
-    "arity mismatch: " ++ formatExpected expected got
+    "arity mismatch: " ++ formatMismatch expected got
   show (UnboundVariable ident) = "variable not bound: " ++ ident
   show (InvalidArgument s) = "invalid argument: " ++ s
 
-formatExpected :: Show a => a -> a -> String
-formatExpected expected got =
+formatMismatch :: Show a => a -> a -> String
+formatMismatch expected got =
   "expected " ++ show expected ++ ", got " ++ show got

@@ -1,18 +1,19 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Language.Prizahl.Builtins where
+
+module Language.Prizahl.Builtins
+  ( builtins
+  ) where
 
 import           Control.Monad.Except     (Except, MonadError (throwError))
 import           Control.Newtype.Generics (Newtype (unpack))
 import           Data.List.NonEmpty       (fromList, toList)
 import qualified Data.Map                 as M
-import           GHC.Generics
 import           Math.NumberTheory.Primes (Prime (unPrime), factorBack,
-                                           factorise, nextPrime)
+                                           factorise)
 import           Prelude                  hiding (readList)
 
 import           Language.Prizahl.AST
 import           Language.Prizahl.Error
-import           Language.Prizahl.Type    (Type (Boolean), isTypeOf)
 import qualified Language.Prizahl.Type    as T
 
 arityMismatch expected args = throwError $ ArityMismatch expected (length args)
@@ -58,9 +59,6 @@ equal args   = arityMismatch 2 args
 addOne [n]  = numberToValue . (+1) <$> readNumber n
 addOne args = arityMismatch 1 args
 
-typecheck expected [value] = return $ ABoolean $ isTypeOf value expected
-typecheck _ args           = arityMismatch 1 args
-
 builtins =
   M.fromList $
   map
@@ -89,6 +87,9 @@ builtins =
 
 toBuiltin :: ([Atom] -> Except (Error T.Type) Atom) -> SExpr
 toBuiltin = SAtom . ABuiltin
+
+typecheck expected [value] = return $ ABoolean $ T.isTypeOf value expected
+typecheck _ args           = arityMismatch 1 args
 
 readPrime (APrime p) = return p
 readPrime v          = throwError $ TypeMismatch (T.Number T.Prime) (T.typeOf v)

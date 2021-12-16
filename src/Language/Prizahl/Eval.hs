@@ -1,10 +1,11 @@
-module Language.Prizahl.Eval where
+module Language.Prizahl.Eval
+  ( runProgram
+  , evalExpression
+  , declare
+  ) where
 
-import           Control.Monad.Except       (Except, runExcept, runExceptT,
-                                             throwError)
-import           Control.Monad.Trans.Except (except)
+import           Control.Monad.Except       (Except, runExcept, throwError)
 import           Control.Monad.Trans.Reader
-import           Data.Function              (on)
 import qualified Data.Map                   as M
 
 import           Data.List                  (sort)

@@ -1,9 +1,18 @@
-module Language.Prizahl.Type where
+module Language.Prizahl.Type
+  ( Type(..)
+  , NumberType(..)
+  , Typed(..)
+  , isTypeOf
+  ) where
 
-import           Text.Megaparsec.Char (lowerChar)
-
-data Type = Number NumberType | Boolean | Symbol | List | Procedure | Any
-  deriving Eq
+data Type
+  = Number NumberType
+  | Boolean
+  | Symbol
+  | List
+  | Procedure
+  | Any
+  deriving (Eq)
 
 instance Show Type where
   show (Number n) = show n

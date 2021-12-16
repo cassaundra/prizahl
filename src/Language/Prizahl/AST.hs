@@ -16,7 +16,6 @@ import           Control.Monad.Except     (Except)
 import           Control.Newtype.Generics (Newtype (unpack))
 import           Data.Foldable            (toList)
 import           Data.Function            (on)
-import           Data.List.NonEmpty       (NonEmpty)
 import           GHC.Generics             (Generic)
 import qualified Math.NumberTheory.Primes as P
 
