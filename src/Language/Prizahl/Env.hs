@@ -1,13 +1,14 @@
 module Language.Prizahl.Env where
 
-import qualified Data.Map             as M
+import qualified Data.Map                  as M
 
 import           Language.Prizahl.AST
+import           Language.Prizahl.Builtins (builtins)
 
 type Env = M.Map Identifier SExpr
 
-defaultEnv :: M.Map k a
-defaultEnv = M.empty
+defaultEnv :: Env
+defaultEnv = builtins
 
 bind :: Identifier -> SExpr -> Env -> Env
 bind = M.insert

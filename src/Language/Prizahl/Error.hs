@@ -6,7 +6,7 @@ data Error t
   = TypeMismatch t t
   | ArityMismatch Int Int
   | UnboundVariable String -- TODO use Identifier
-  | OtherError String
+  | InvalidArgument String
   deriving Eq
 
 instance Show t => Show (Error t) where
@@ -15,7 +15,7 @@ instance Show t => Show (Error t) where
   show (ArityMismatch expected got) =
     "arity mismatch: " ++ formatExpected expected got
   show (UnboundVariable ident) = "variable not bound: " ++ ident
-  show (OtherError s) = "error: " ++ s
+  show (InvalidArgument s) = "invalid argument: " ++ s
 
 formatExpected :: Show a => a -> a -> String
 formatExpected expected got =

@@ -13,10 +13,11 @@ instance Show Type where
   show Procedure  = "procedure"
   show Any        = "any"
 
-data NumberType = Prime | Composite | AnyNumber
+data NumberType = Zero | Prime | Composite | AnyNumber
   deriving Eq
 
 instance Show NumberType where
+  show Zero      = "zero"
   show Prime     = "prime number"
   show Composite = "composite number"
   show AnyNumber = "number"

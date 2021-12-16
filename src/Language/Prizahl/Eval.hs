@@ -4,17 +4,17 @@ import           Control.Monad.Except       (Except, runExcept, runExceptT,
                                              throwError)
 import           Control.Monad.Trans.Except (except)
 import           Control.Monad.Trans.Reader
+import           Data.Function              (on)
 import qualified Data.Map                   as M
 
-import           Data.List.NonEmpty         (NonEmpty ((:|)))
-
+import           Data.List                  (sort)
 import           Language.Prizahl.AST
 import           Language.Prizahl.Env
 import           Language.Prizahl.Error
 import qualified Language.Prizahl.Type      as Type
 
 runProgram :: Body -> Except (Error Type.Type) Atom
-runProgram body = runReaderT (eval $ desugarBody body) M.empty
+runProgram body = runReaderT (eval $ desugarBody body) defaultEnv
 
 evalExpression :: Expr -> Env -> Except (Error Type.Type) Atom
 evalExpression expr = runReaderT (eval $ desugar expr)
@@ -50,9 +50,10 @@ desugar (EBegin body)         = desugarBody body
 desugar (ELet bindings body)  = error "not implemented"
 
 desugarValue :: Value -> Atom
+desugarValue VZero = AZero
 desugarValue (VPrime p) = APrime p
-desugarValue (VFactorization (Factor (p, 1) :| [])) = APrime p
-desugarValue (VFactorization factors) = AComposite factors
+desugarValue (VFactorization [Factor (p, 1)]) = APrime p
+desugarValue (VFactorization factors) = AComposite (sort factors)
 desugarValue (VBoolean bool) = ABoolean bool
 desugarValue (VSymbol symbol) = ASymbol symbol
 desugarValue (VList list) = AList (fmap desugarValue list)

@@ -65,7 +65,7 @@ body = do
 identifier :: Parser Identifier
 identifier =
   label "identifier" $
-  lexeme $ (:) <$> letterChar <*> many (alphaNumChar <|> char '-')
+  lexeme $ (:) <$> letterChar <*> many (alphaNumChar <|> char '-' <|> char '?')
 
 expr :: Parser Expr
 expr = lexeme $ try (EValue <$> value) <|> variable <|> try begin <|> application
@@ -89,27 +89,30 @@ begin = label "begin block" $
 -- TODO let
 
 value :: Parser Value
-value = label "value" $ lexeme $ (VPrime <$> prime) <|> factorization <|> boolean <|> try quoteSymbol <|> list <|> lambda
+value = label "value" $ lexeme $ number <|> boolean <|> try quoteSymbol <|> list <|> lambda
 
-prime :: Parser (P.Prime Integer)
+number = zero <|> (VPrime <$> prime) <|> factorization
+
+zero = do
+  void $ some (char '0')
+  return VZero
+
 prime =
   label "prime" $ do
     p <- lexeme L.decimal
-    unless (PT.isPrime p) $ failHere "not prime!"
+    unless (PT.isPrime p) $ failHere "not prime"
     return (P.nextPrime p)
 
-factorization :: Parser Value
 factorization =
   label "factorization" $
-  surround '[' ']' $ VFactorization . fromList <$> some factor
+  surround '[' ']' $ VFactorization <$> many factor
 
-factor :: Parser Factor
 factor =
   label "factor" $
   lexeme $ do
     base <- prime
     expt <- fromMaybe 1 <$> optional (char '^' *> L.decimal)
-    unless (expt > 0) $ failHere "not positive!"
+    unless (expt > 0) $ failHere "not positive"
     return $ Factor (base, expt)
 
 boolean :: Parser Value
@@ -137,7 +140,7 @@ list =
 lambda :: Parser Value
 lambda =
   label "lambda" $ sexp $ do
-    symbol "lambda"
+    symbol "lambda" <|> symbol "λ"
     formals <- formals
     VLambda formals <$> body
 
